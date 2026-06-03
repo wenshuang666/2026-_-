@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<title>图像处理期末复习·自测卡</title>
+<style>
+body{font-family:'Microsoft YaHei',sans-serif;max-width:700px;margin:20px auto;padding:0 15px;line-height:1.8}
+h1{text-align:center;color:#1a237e;border-bottom:3px solid #1a237e;padding-bottom:10px}
+h2{color:#283593;margin-top:25px}
+.q{margin:8px 0;padding:8px;background:#f5f5f5;border-radius:6px}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin:5px 0}
+.opt{cursor:pointer;padding:5px 12px;border:1px solid #ccc;border-radius:4px;background:#fff;transition:.2s}
+.opt:hover{background:#e8eaf6;border-color:#3f51b5}
+.opt.sel{background:#c5cae9;border-color:#1a237e;font-weight:bold}
+.opt.correct{background:#c8e6c9!important;border-color:#2e7d32!important}
+.opt.wrong{background:#ffcdd2!important;border-color:#c62828!important}
+.btn{display:inline-block;margin:10px 5px;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:15px}
+.btn-check{background:#1a237e;color:white}.btn-reset{background:#eee;color:#333}
+.feedback{margin:8px 0;padding:6px 12px;border-radius:4px;font-weight:bold}
+.score-box{text-align:center;font-size:24px;font-weight:bold;color:#1a237e;margin:20px 0;display:none}
+.feedback-box{padding:10px;margin:5px 0;border-radius:6px;display:none;line-height:1.6}
+.fb-correct{background:#e8f5e9;border-left:4px solid #2e7d32}
+.fb-wrong{background:#ffebee;border-left:4px solid #c62828}
+.hint{color:#999;font-size:13px}
+</style>
+</head>
+<body>
+<h1>📐 图像处理与机器视觉<br><small style="font-size:16px;color:#666">期末复习自测卡 · 选择题专项</small></h1>
+<p style="text-align:center;color:#888">选择题专项 · 共12题 · 每题3分 · 满分36分（全卷150分） | 点击选项作答，点击「检查」看结果</p>
+
+<div id="questions"></div>
+
+<div style="text-align:center">
+<button class="btn btn-check" onclick="checkAll()">✅ 检查答案</button>
+<button class="btn btn-reset" onclick="resetAll()">🔄 重新做</button>
+</div>
+
+<div class="score-box" id="scoreBox"></div>
+<div id="feedbackArea"></div>
+
+<script>
+const QUIZ = [
+{q:"图像数字化中，将连续像素亮度值转为离散整数值的过程称为？",
+ opts:["量化","采样","编码","压缩"],ans:0,
+ fb:"量化(Quantization)是对像素亮度值的离散化，将连续灰度值映射到有限个离散级别。采样是对空间位置的离散化。"},
+{q:"以下哪种滤波器对椒盐噪声的去噪效果最好？",
+ opts:["中值滤波","高斯滤波","均值滤波","双边滤波"],ans:0,
+ fb:"中值滤波(Median Filter)是非线性滤波，用邻域中值替代中心像素，对椒盐噪声（极点噪声）效果显著，因为它不引入新灰度值。"},
+{q:"关于8邻接和m邻接，说法正确的是？",
+ opts:["8邻接不会产生二义性","m邻接是4邻接的一种","m邻接可消除8邻接路径二义性","m邻接比8邻接连接数量更多"],ans:2,
+ fb:"m邻接(Mixed Adjacency)是8邻接的改进，引入条件限制以消除8邻接可能产生的路径二义性（即同一条路径可能有两种走法）。"},
+{q:"哪种算子使用2×2模板进行边缘检测？",
+ opts:["Sobel算子","Prewitt算子","Laplacian算子","Roberts算子"],ans:3,
+ fb:"Roberts算子使用2×2模板[Z5,Z6,Z8,Z9]，梯度Gx=Z9-Z5,Gy=Z8-Z6。Sobel和Prewitt使用3×3模板。"},
+{q:"深度学习模型中，Dropout的主要作用是？",
+ opts:["加速训练","防止过拟合","提高模型复杂度","减少计算量"],ans:1,
+ fb:"Dropout(丢弃法)在训练时随机丢弃一定比例神经元，相当于训练多个子网络并取平均，是防止过拟合的常用正则化方法。"},
+{q:"二分类问题中，F1值是？",
+ opts:["精确率和召回率的调和平均","精确率和准确率的调和平均","召回率和准确率的调和平均","三项的加权平均"],ans:0,
+ fb:"F1=2×P×R/(P+R)，是精确率(Precision)和召回率(Recall)的调和平均数，综合衡量模型性能。"},
+{q:"关于VGG16网络，说法错误的是？",
+ opts:["全部使用3×3小卷积核","共有16个带权重的层","全连接层有两层4096神经元","池化层使用3×3的池化窗口"],ans:3,
+ fb:"VGG16全部使用2×2的max pooling(stride=2)，而非3×3。其他三项正确：13卷积+3全连接=16层，3×3卷积核，4096全连接。"},
+{q:"均方误差(MSE)损失函数常用于？",
+ opts:["分类问题","聚类问题","回归问题","降维问题"],ans:2,
+ fb:"MSE(Mean Squared Error)衡量预测值与真实值的平方差，适用于回归问题（输出连续值）。分类问题常用交叉熵损失。"},
+{q:"图像直方图表示的是？",
+ opts:["各像素空间分布","各灰度级出现频率","边缘分布情况","不同颜色相关性"],ans:1,
+ fb:"灰度直方图统计各灰度级出现的频率/次数，反映图像灰度分布，但不能描述像素间空间关系。一个直方图可对应多个不同图像。"},
+{q:"Inception模块中1×1卷积主要目的是？",
+ opts:["降低通道维度(减少参数量)","提取空间特征","增加感受野","增加网络深度"],ans:0,
+ fb:"1×1卷积(Pointwise Conv)在Inception/GoogLeNet中用于降维：在不改变空间尺寸的前提下减少通道数，从而减少后续3×3/5×5卷积的参数量。"},
+{q:"击中击不中变换(Hit-or-Miss Transform)主要用于？",
+ opts:["图像平滑","检测特定形状或模式","图像压缩","直方图均衡化"],ans:1,
+ fb:"击中击不中变换是二值形态学操作，用于在图像中检测特定形状或模式(pattern matching)，常用于模板匹配和目标定位。"},
+{q:"工业视觉系统需求分析中，哪项属于「性能需求」？",
+ opts:["识别工业字符","检测产品缺陷区域","缺陷检测准确率达到98%","监控人员操作规范性"],ans:2,
+ fb:"性能需求(Performance Requirement)是量化指标，如'准确率达到98%'。其他为功能需求(做什么)或过程描述。"}
+];
+
+let userAnswers = new Array(12).fill(-1);
+
+function render(){
+  let html='';
+  QUIZ.forEach((q,i)=>{
+    html+=`<div class="q"><strong>${i+1}. ${q.q}</strong><div class="opts">`;
+    q.opts.forEach((o,j)=>{
+      let cls='opt';
+      if(userAnswers[i]===j) cls+=' sel';
+      html+=`<span class="${cls}" onclick="select(${i},${j})">${String.fromCharCode(65+j)}. ${o}</span>`;
+    });
+    html+='</div></div>';
+  });
+  document.getElementById('questions').innerHTML=html;
+}
+
+function select(qi, oi){
+  userAnswers[qi]=oi;
+  render();
+  document.getElementById('scoreBox').style.display='none';
+}
+
+function checkAll(){
+  let correct=0, fbHtml='', answered=0;
+  QUIZ.forEach((q,i)=>{
+    let fbBox='';
+    if(userAnswers[i]===-1){
+      fbBox=`<div class="feedback-box fb-wrong"><b>${i+1}. 未作答</b> ❌ (${String.fromCharCode(65+q.ans)}) ${q.fb}</div>`;
+    }else if(userAnswers[i]===q.ans){
+      correct++; answered++;
+      fbBox=`<div class="feedback-box fb-correct"><b>${i+1}. ✅ 正确</b> (${String.fromCharCode(65+q.ans)}) ${q.fb}</div>`;
+    }else{
+      answered++;
+      fbBox=`<div class="feedback-box fb-wrong"><b>${i+1}. ❌ 你的答案: ${String.fromCharCode(65+userAnswers[i])} → 正确答案: ${String.fromCharCode(65+q.ans)}</b><br>${q.fb}</div>`;
+    }
+    fbHtml+=fbBox;
+    // Highlight correct/wrong in options
+    let qDiv=document.querySelectorAll('.q')[i];
+    if(!qDiv) return;
+    let opts=qDiv.querySelectorAll('.opt');
+    opts.forEach((opt,j)=>{
+      if(j===q.ans) opt.classList.add('correct');
+      else if(j===userAnswers[i]&&j!==q.ans) opt.classList.add('wrong');
+    });
+  });
+  document.getElementById('scoreBox').style.display='block';
+  document.getElementById('scoreBox').innerHTML=`得分: ${correct*3}/36 (${correct}/12题)`;
+  document.getElementById('feedbackArea').innerHTML=fbHtml;
+}
+
+function resetAll(){
+  userAnswers=new Array(12).fill(-1);
+  render();
+  document.getElementById('scoreBox').style.display='none';
+  document.getElementById('feedbackArea').innerHTML='';
+}
+
+render();
+</script>
+<p style="text-align:center;margin-top:30px;color:#999;font-size:13px">
+  📘 图像处理与机器视觉 · 期末复习 · 选择题自测卡 | 答案: AACDBADCBA+BB | 建议12题18分钟内完成
+</p>
+</body>
+</html>
